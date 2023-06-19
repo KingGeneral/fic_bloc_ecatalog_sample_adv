@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_ecatalog/bloc/auth_register/auth_register_cubit.dart';
 
 import 'package:flutter_ecatalog/data/models/request/register_request_model.dart';
 import 'package:flutter_ecatalog/presentation/login_page.dart';
@@ -66,43 +67,58 @@ class _RegisterPageState extends State<RegisterPage> {
             const SizedBox(
               height: 16,
             ),
-            BlocConsumer<RegisterBloc, RegisterState>(
-              builder: (context, state) {
-                if (state is RegisterLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                return ElevatedButton(
-                    onPressed: () {
-                      final requestModel = RegisterRequestModel(
-                          name: nameController!.text,
-                          email: emailController!.text,
-                          password: passwordController!.text);
-                      context.read<RegisterBloc>().add(
-                            DoRegisterEvent(model: requestModel),
-                          );
-                    },
-                    child: const Text('Register'));
-              },
+            BlocConsumer<AuthRegisterCubit, AuthRegisterState>(
               listener: (context, state) {
-                if (state is RegisterError) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.red,
-                  ));
-                }
-
-                if (state is RegisterLoaded) {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content:
-                        Text('Register Success with id: ${state.model.id}'),
-                    backgroundColor: Colors.blue,
-                  ));
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return const LoginPage();
-                  }));
-                }
+                state.maybeWhen(
+                  orElse: () {},
+                  error: (message) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  },
+                  loaded: (model) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Register Success with id: ${model.id}'),
+                        backgroundColor: Colors.blue,
+                      ),
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return const LoginPage();
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+              builder: (context, state) {
+                return state.maybeWhen(
+                  orElse: () {
+                    return ElevatedButton(
+                      onPressed: () {
+                        final requestModel = RegisterRequestModel(
+                            name: nameController!.text,
+                            email: emailController!.text,
+                            password: passwordController!.text);
+                        context
+                            .read<AuthRegisterCubit>()
+                            .register(requestModel);
+                      },
+                      child: const Text('Register'),
+                    );
+                  },
+                  loading: () {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                );
               },
             ),
             const SizedBox(
