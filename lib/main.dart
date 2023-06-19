@@ -2,6 +2,9 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ecatalog/bloc/add_product/add_product_bloc.dart';
+import 'package:flutter_ecatalog/bloc/auth_login/auth_login_cubit.dart';
+import 'package:flutter_ecatalog/bloc/auth_register/auth_register_cubit.dart';
+import 'package:flutter_ecatalog/bloc/product_add/product_add_cubit.dart';
 import 'package:flutter_ecatalog/bloc/product_update/product_update_cubit.dart';
 import 'package:flutter_ecatalog/bloc/products/products_bloc.dart';
 import 'package:flutter_ecatalog/bloc/update_product/update_product_bloc.dart';
@@ -29,13 +32,22 @@ class MyApp extends StatelessWidget {
           create: (context) => RegisterBloc(AuthDatasource()),
         ),
         BlocProvider(
+          create: (context) => AuthRegisterCubit(AuthDatasource()),
+        ),
+        BlocProvider(
           create: (context) => LoginBloc(AuthDatasource()),
+        ),
+        BlocProvider(
+          create: (context) => AuthLoginCubit(AuthDatasource()),
         ),
         BlocProvider(
           create: (context) => ProductsBloc(ProductDataSource()),
         ),
         BlocProvider(
           create: (context) => AddProductBloc(ProductDataSource()),
+        ),
+        BlocProvider(
+          create: (context) => ProductAddCubit(ProductDataSource()),
         ),
         BlocProvider(
           create: (context) => UpdateProductBloc(ProductDataSource()),
