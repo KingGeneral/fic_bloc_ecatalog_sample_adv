@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_ecatalog/bloc/add_product/add_product_bloc.dart';
+import 'package:flutter_ecatalog/bloc/product_add/product_add_cubit.dart';
 import 'package:flutter_ecatalog/bloc/products/products_bloc.dart';
 import 'package:flutter_ecatalog/data/datasources/local_datasource.dart';
 import 'package:flutter_ecatalog/data/models/request/product_request_model.dart';
@@ -107,84 +108,52 @@ class _HomePageState extends State<HomePage> {
           Navigator.push(context, MaterialPageRoute(builder: (_) {
             return const AddProductPage();
           }));
-          // showDialog(
-          //     context: context,
-          //     builder: (context) {
-          //       return AlertDialog(
-          //         title: const Text('Add Product'),
-          //         content: Column(
-          //           mainAxisSize: MainAxisSize.min,
-          //           children: [
-          //             TextField(
-          //               controller: titleController,
-          //               decoration: const InputDecoration(labelText: 'Title'),
-          //             ),
-          //             TextField(
-          //               controller: priceController,
-          //               decoration: const InputDecoration(labelText: 'Price'),
-          //             ),
-          //             TextField(
-          //               controller: descriptionController,
-          //               decoration:
-          //                   const InputDecoration(labelText: 'Description'),
-          //               maxLines: 3,
-          //             ),
-          //           ],
-          //         ),
-          //         actions: [
-          //           ElevatedButton(
-          //               onPressed: () {
-          //                 Navigator.pop(context);
-          //               },
-          //               child: const Text('Cancel')),
-          //           const SizedBox(
-          //             width: 8,
-          //           ),
-          BlocConsumer<AddProductBloc, AddProductState>(
+          BlocListener<ProductAddCubit, ProductAddState>(
             listener: (context, state) {
-              if (state is AddProductLoaded) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Add Product Success')),
-                );
-                // context.read<ProductsBloc>().add(GetProductsEvent());
-                context
-                    .read<ProductsBloc>()
-                    .add(AddSingleProductsEvent(data: state.model));
-                titleController!.clear();
-                priceController!.clear();
-                descriptionController!.clear();
-                Navigator.pop(context);
-              }
-              if (state is AddProductError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Add Product ${state.message}')),
-                );
-              }
+              state.maybeWhen(
+                orElse: () {},
+                loaded: (model) {
+                  debugPrint(model.toString());
+                  Navigator.pop(context);
+                },
+                error: (message) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        message,
+                      ),
+                    ),
+                  );
+                },
+              );
             },
-            builder: (context, state) {
-              if (state is AddProductLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-              return ElevatedButton(
-                  onPressed: () {
-                    final model = ProductRequestModel(
-                      title: titleController!.text,
-                      price: int.parse(priceController!.text),
-                      description: descriptionController!.text,
+            child: BlocBuilder<ProductAddCubit, ProductAddState>(
+              builder: (context, state) {
+                return state.maybeWhen(
+                  orElse: () {
+                    return ElevatedButton(
+                      onPressed: () {
+                        final model = ProductRequestModel(
+                          title: titleController!.text,
+                          price: int.parse(priceController!.text),
+                          description: descriptionController!.text,
+                        );
+                        context
+                            .read<AddProductBloc>()
+                            .add(DoAddProductEvent(model: model));
+                      },
+                      child: const Text('Add'),
                     );
-
-                    context
-                        .read<AddProductBloc>()
-                        .add(DoAddProductEvent(model: model));
                   },
-                  child: const Text('Add'));
-            },
+                  loading: () {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  },
+                );
+              },
+            ),
           );
-          //         ],
-          //       );
-          //     });
         },
         child: const Icon(Icons.add),
       ),
